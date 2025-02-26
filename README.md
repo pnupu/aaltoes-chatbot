@@ -37,7 +37,11 @@ A ChatBot utilizing the ChatGPT API to provide generic assistance, designed spec
    npm install
    ```
 4. Configure environment variables:
-   - Create a `.env.local` file in the root directory.
+   - Create a `.env` file in the root directory.
+   - You can use the provided `.env.example` file as a template:
+     ```bash
+     cp .env.example .env
+     ```
    - Add the following environment variables:
      ```
      NEXTAUTH_SECRET=your_secret_here
@@ -46,8 +50,9 @@ A ChatBot utilizing the ChatGPT API to provide generic assistance, designed spec
      OPENAI_API_KEY=your_openai_api_key_here
      ANTHROPIC_API_KEY=your_anthropic_api_key_here
      DATABASE_URL=your_database_url_here
+     DEEPSEEK_API_KEY=your_deepseek_api_key_here
      ```
-   Ensure you replace `your_secret_here`, `your_google_client_id_here`, `your_google_client_secret_here`, `your_openai_api_key_here`, `your_anthropic_api_key_here`, and `your_database_url_here` with your actual credentials.
+   Ensure you replace `your_secret_here`, `your_google_client_id_here`, `your_google_client_secret_here`, `your_openai_api_key_here`, `your_anthropic_api_key_here`, `your_database_url_here`, and `your_deepseek_api_key_here` with your actual credentials.
 
 5. Run the development server:
    ```bash
