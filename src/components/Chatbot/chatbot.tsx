@@ -56,13 +56,57 @@ export function ScrollableChatMessages({
 }) {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const scrollableRef = useRef<HTMLDivElement>(null);
-  const model = useModel();
+  const defaultModel = useModel();
+  const [chatModel, setChatModel] = useState<string>(defaultModel);
+
+  // Fetch the chat model when the component mounts or chatId changes
+  useEffect(() => {
+    const fetchChatModel = async () => {
+      try {
+        const response = await fetch(`/api/chat/${chatId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.model) {
+            setChatModel(data.model);
+            console.log(`Using model from chat in ScrollableChatMessages: ${data.model}`);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching chat model:", error);
+      }
+    };
+
+    if (chatId) {
+      fetchChatModel();
+    }
+  }, [chatId]);
+
+  // Listen for model change events
+  useEffect(() => {
+    const handleModelChange = (event: CustomEvent) => {
+      const { model, chatId: eventChatId } = event.detail;
+      
+      // Only update if this event is for our chat
+      if (eventChatId === chatId) {
+        console.log(`Model changed event received in ScrollableChatMessages: ${model} for chat ${chatId}`);
+        setChatModel(model);
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('modelChange', handleModelChange as EventListener);
+
+    // Clean up
+    return () => {
+      window.removeEventListener('modelChange', handleModelChange as EventListener);
+    };
+  }, [chatId]);
 
   const { messages } = useChat({
     id: chatId,
     api: "/api/chat",
     headers: {
-      model: model,
+      model: chatModel,
     },
     experimental_throttle: 50,
     initialMessages: initialMessages,
@@ -119,16 +163,64 @@ function ChatMessages({
   initialMessages: Message[];
   className?: string;
 }) {
-  const model = useModel();
+  const defaultModel = useModel();
+  const [chatModel, setChatModel] = useState<string>(defaultModel);
   const { isMobile } = useSidebar();
+
+  // Fetch the chat model when the component mounts or chatId changes
+  useEffect(() => {
+    const fetchChatModel = async () => {
+      try {
+        const response = await fetch(`/api/chat/${chatId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.model) {
+            setChatModel(data.model);
+            console.log(`Using model from chat in ChatMessages: ${data.model}`);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching chat model:", error);
+      }
+    };
+
+    if (chatId) {
+      fetchChatModel();
+    }
+  }, [chatId]);
+
+  // Listen for model change events
+  useEffect(() => {
+    const handleModelChange = (event: CustomEvent) => {
+      const { model, chatId: eventChatId } = event.detail;
+      
+      // Only update if this event is for our chat
+      if (eventChatId === chatId) {
+        console.log(`Model changed event received in ChatMessages: ${model} for chat ${chatId}`);
+        setChatModel(model);
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('modelChange', handleModelChange as EventListener);
+
+    // Clean up
+    return () => {
+      window.removeEventListener('modelChange', handleModelChange as EventListener);
+    };
+  }, [chatId]);
+
   const { messages } = useChat({
     id: chatId,
     api: "/api/chat",
     headers: {
-      model: model,
+      model: chatModel,
     },
     experimental_throttle: 50,
     initialMessages: initialMessages,
+    onError: (error) => {
+      console.error("Chat messages error:", error);
+    },
   });
 
   return (
@@ -170,8 +262,64 @@ const ChatInput = ({
   className?: string;
 }) => {
   const { data: session } = useSession();
-  const model = useModel();
+  const defaultModel = useModel();
+  const [chatModel, setChatModel] = useState<string>(defaultModel);
   const { isMobile } = useSidebar();
+
+  // Fetch the chat model when the component mounts or chatId changes
+  useEffect(() => {
+    const fetchChatModel = async () => {
+      try {
+        const response = await fetch(`/api/chat/${chatId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.model) {
+            setChatModel(data.model);
+            console.log(`Using model from chat: ${data.model}`);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching chat model:", error);
+      }
+    };
+
+    if (chatId) {
+      fetchChatModel();
+    }
+  }, [chatId]);
+
+  // Listen for model change events
+  useEffect(() => {
+    const handleModelChange = (event: CustomEvent) => {
+      const { model, chatId: eventChatId } = event.detail;
+      
+      // Only update if this event is for our chat
+      if (eventChatId === chatId) {
+        console.log(`Model changed event received: ${model} for chat ${chatId}`);
+        setChatModel(model);
+      }
+    };
+
+    const handleDefaultModelChange = (event: CustomEvent) => {
+      // Only update if we don't have a specific chat model
+      if (!chatId) {
+        const { model } = event.detail;
+        console.log(`Default model changed to: ${model}`);
+        setChatModel(model);
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('modelChange', handleModelChange as EventListener);
+    window.addEventListener('defaultModelChange', handleDefaultModelChange as EventListener);
+
+    // Clean up
+    return () => {
+      window.removeEventListener('modelChange', handleModelChange as EventListener);
+      window.removeEventListener('defaultModelChange', handleDefaultModelChange as EventListener);
+    };
+  }, [chatId]);
+
   const {
     messages,
     input,
@@ -184,7 +332,7 @@ const ChatInput = ({
     id: chatId,
     api: "/api/chat",
     headers: {
-      model
+      model: chatModel
     },
     body: {
       id: chatId,
@@ -192,6 +340,7 @@ const ChatInput = ({
     initialMessages: initialMessages,
     experimental_throttle: 50,
     onError: (error) => {
+      console.error("Chat error:", error);
       const errorMessage = error.message || "An error occurred";
       toast({
         variant: "destructive",

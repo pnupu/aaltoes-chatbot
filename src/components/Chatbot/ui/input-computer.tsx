@@ -12,6 +12,7 @@ interface InputComputerProps {
   stop: () => void;
   reload: () => void;
   disabled: boolean;
+  chatId?: string;
 }
 
 export function InputComputer({
@@ -22,6 +23,7 @@ export function InputComputer({
   stop,
   reload,
   disabled,
+  chatId,
 }: InputComputerProps) {
   return (
     <div className="flex w-full gap-2">

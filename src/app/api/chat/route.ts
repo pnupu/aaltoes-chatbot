@@ -3,9 +3,10 @@ import { createOpenAI } from "@ai-sdk/openai";
 import prisma from "../../../lib/prisma";
 import getSession from "../../../lib/getSession";
 import { MODELS } from "../../../lib/constants";
-import { encodingForModel, TiktokenModel } from "js-tiktoken";
 import { z } from "zod";
 import { createDeepSeek } from '@ai-sdk/deepseek';
+import { createAnthropic } from '@ai-sdk/anthropic';
+import { countTokens } from "@/utils/tokenizer";
 
 const deepseek = createDeepSeek({
   apiKey: process.env.DEEPSEEK_API_KEY,
@@ -13,6 +14,10 @@ const deepseek = createDeepSeek({
 
 const openaiClient = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+});
+
+const anthropicClient = createAnthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 const reqSchema = z.object({
@@ -57,7 +62,7 @@ export async function POST(req: Request) {
       );
     }
     const { messages, id: chatId } = body.data;
-    const model = req.headers.get('model') || "gpt-4o-mini";
+    const requestModel = req.headers.get('model') || "gpt-4o-mini";
 
     if (!chatId) {
       return new Response(
@@ -72,10 +77,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // Verify chat belongs to user
+    // Verify chat belongs to user and get current model
     const chat = await prisma.chat.findUnique({
       where: { id: chatId },
-      select: { user_id: true },
+      select: { user_id: true, model: true },
     });
 
     if (!chat || chat.user_id !== user?.id) {
@@ -89,6 +94,16 @@ export async function POST(req: Request) {
           headers: { "Content-Type": "application/json" },
         },
       );
+    }
+
+    // If the model in the request is different from the one stored in the chat, update it
+    let model = chat.model;
+    if (requestModel !== chat.model) {
+      await prisma.chat.update({
+        where: { id: chatId },
+        data: { model: requestModel },
+      });
+      model = requestModel;
     }
 
     const user_quota = await prisma.user.findUnique({
@@ -140,7 +155,7 @@ export async function POST(req: Request) {
             })
             .then((chatHistory) =>
               generateText({
-                model: ((model === "deepseek-chat" || model === "deepseek-reasoner") ? deepseek(model as keyof typeof MODELS) : openaiClient(model)) as any,
+                model: getModelClient(model),
                 prompt: `Given current chat topic: ${data?.topic}, generate a new concise chat topic (5 words) taking into account the following new messages:\n${chatHistory
                   .reverse()
                   .map((m) => `${m.role}: ${m.content}`)
@@ -163,7 +178,7 @@ export async function POST(req: Request) {
       console.log(model)
 
       const stream = await streamText({
-        model: ((model === "deepseek-chat" || model === "deepseek-reasoner") ? deepseek(model) : openaiClient(model)) as any,
+        model: getModelClient(model),
         messages: [...messages],
         temperature: 0.7,
         frequencyPenalty: 0.5,
@@ -171,13 +186,12 @@ export async function POST(req: Request) {
 
         async onFinish({ finishReason, usage, text }) {
           if (chatId && user.id) {
-            const encoding = encodingForModel(model as TiktokenModel);
-            const input_quota =
-              encoding.encode(text).length *
-              MODELS[model as keyof typeof MODELS].input_quota;
-            const output_quota =
-              encoding.encode(text).length *
-              MODELS[model as keyof typeof MODELS].output_quota;
+            // Use our custom tokenizer that handles all model types
+            const tokenCount = countTokens(text, model);
+            
+            const input_quota = tokenCount * MODELS[model as keyof typeof MODELS].input_quota;
+            const output_quota = tokenCount * MODELS[model as keyof typeof MODELS].output_quota;
+            
 
             await prisma.message.create({
               data: {
@@ -228,5 +242,16 @@ export async function POST(req: Request) {
         headers: { "Content-Type": "application/json" },
       },
     );
+  }
+}
+
+// Helper function to get the appropriate model client
+function getModelClient(model: string) {
+  if (model.startsWith('claude')) {
+    return anthropicClient(model) as any;
+  } else if (model.startsWith('deepseek')) {
+    return deepseek(model) as any;
+  } else {
+    return openaiClient(model) as any;
   }
 }

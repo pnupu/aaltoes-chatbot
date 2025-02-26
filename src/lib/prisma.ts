@@ -3,7 +3,7 @@ import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "@prisma/client";
 
 const prismaClientSingleton = () => {
-  if (process.env.DATABASE_ENV==="docker") {
+  if (process.env.DATABASE_ENV === "docker" || !process.env.DATABASE_URL?.includes("neon")) {
     return new PrismaClient();
   } else {
     const neon = new Pool({ connectionString: process.env.DATABASE_URL });

@@ -13,6 +13,7 @@ interface InputMobileProps {
   stop: () => void;
   reload: () => void;
   disabled: boolean;
+  chatId?: string;
 }
 
 export function InputMobile({
@@ -23,12 +24,13 @@ export function InputMobile({
   stop,
   reload,
   disabled,
+  chatId,
 }: InputMobileProps) {
   return (
     <div className="relative flex-1">
       <div className="relative flex-1 border-t border-border bg-background/95 pt-3">
         <div className="flex items-center justify-between px-1 pb-2">
-        <SelectModel />
+        <SelectModel chatId={chatId} />
           <div className="flex items-center gap-1.5">
             {isLoading ? (
               <button

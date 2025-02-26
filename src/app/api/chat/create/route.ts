@@ -4,7 +4,8 @@ import { z } from "zod";
 
 const reqSchema = z.object({
     chatId: z.string(),
-    content: z.string()
+    content: z.string(),
+    model: z.string().optional()
 });
 
 export async function POST(req: Request) {
@@ -13,7 +14,7 @@ export async function POST(req: Request) {
         if (!body.success) {
             return new Response(JSON.stringify(body.error.errors), { status: 400 });
         }
-        const { chatId, content } = body.data;
+        const { chatId, content, model = "gpt-4o-mini" } = body.data;
         const session = await getSession();
         const user = session?.user;
         
@@ -29,7 +30,8 @@ export async function POST(req: Request) {
                         id: user?.id
                     }
                 },
-                topic: "New chat"
+                topic: "New chat",
+                model: model
             },
             include: {
                 messages: true

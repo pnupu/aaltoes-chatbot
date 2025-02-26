@@ -23,19 +23,24 @@ const chatSchema = z.object({
 });
 
 const fetchChats = async ({ userId }: { userId: string }) => {
-  const response = await fetch("/api/chat/select", {
-    method: "GET",
-    headers: {
-      user_id: userId,
-    },
-  });
-  if (!response.ok) throw new Error("Failed to fetch chats");
-  const chats = z.array(chatSchema).safeParse(await response.json());
-  if (!chats.success) {
-    console.error(chats.error.errors);
+  try {
+    const response = await fetch("/api/chat/select", {
+      method: "GET",
+      headers: {
+        user_id: userId,
+      },
+    });
+    if (!response.ok) throw new Error("Failed to fetch chats");
+    const chats = z.array(chatSchema).safeParse(await response.json());
+    if (!chats.success) {
+      console.error(chats.error.errors);
+      return [];
+    }
+    return chats.data;
+  } catch (error) {
+    console.error("Error fetching chats:", error);
     return [];
   }
-  return chats.data;
 };
 
 export function AppSidebarContent() {

@@ -36,6 +36,9 @@ export default function WelcomeInput() {
       id: id,
     },
     initialMessages: [],
+    onError: (error) => {
+      console.error("Welcome input error:", error);
+    },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,7 +51,11 @@ export default function WelcomeInput() {
       try {
         const response = await fetch("/api/chat/create", {
           method: "POST",
-          body: JSON.stringify({ chatId: id, content: content }),
+          body: JSON.stringify({ 
+            chatId: id, 
+            content: content,
+            model: model 
+          }),
           headers: {
             "Content-Type": "application/json",
           },

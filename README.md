@@ -1,4 +1,3 @@
-
 # Aaltoes ChatBot
 
 A ChatBot utilizing the ChatGPT API to provide generic assistance, designed specifically for Aaltoes. This project features a user-friendly administrative panel to manage roles and quotas, with an intuitive interface inspired by ChatGPT's design.
@@ -7,7 +6,7 @@ A ChatBot utilizing the ChatGPT API to provide generic assistance, designed spec
 
 - Authorization with Google.
 - Responses are streamed and rendered in memoized markdown.
-- Ability to select different ChatGPT models which affect how quotas are counted.
+- Ability to select different AI models (OpenAI, Claude, DeepSeek) which affect how quotas are counted.
 - Autoscroll functionality.
 - Ability to reload/stop responses.
 - Admin panel for role management.
@@ -45,9 +44,10 @@ A ChatBot utilizing the ChatGPT API to provide generic assistance, designed spec
      GOOGLE_CLIENT_ID=your_google_client_id_here
      GOOGLE_CLIENT_SECRET=your_google_client_secret_here
      OPENAI_API_KEY=your_openai_api_key_here
+     ANTHROPIC_API_KEY=your_anthropic_api_key_here
      DATABASE_URL=your_database_url_here
      ```
-   Ensure you replace `your_secret_here`, `your_google_client_id_here`, `your_google_client_secret_here`, `your_openai_api_key_here`, and `your_database_url_here` with your actual credentials.
+   Ensure you replace `your_secret_here`, `your_google_client_id_here`, `your_google_client_secret_here`, `your_openai_api_key_here`, `your_anthropic_api_key_here`, and `your_database_url_here` with your actual credentials.
 
 5. Run the development server:
    ```bash

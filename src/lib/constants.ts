@@ -18,5 +18,17 @@ export const MODELS = {
     "deepseek-reasoner":{
         "input_quota": 30/1000000,
         "output_quota": 60/1000000
+    },
+    "claude-3-opus-20240229":{
+        "input_quota": 15/1000000,
+        "output_quota": 75/1000000
+    },
+    "claude-3-5-sonnet-20241022":{
+        "input_quota": 3/1000000,
+        "output_quota": 15/1000000
+    },
+    "claude-3-7-sonnet-20250219":{
+        "input_quota": 3/1000000,
+        "output_quota": 15/1000000
     }
 }

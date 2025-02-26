@@ -1,41 +1,142 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useModel } from "@/hooks/use-model";
+import { toast } from "../ui/use-toast";
 import { MODELS } from "@/lib/constants";
-import { cn } from "@/lib/utils";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export function SelectModel() {
-  const [selectedModel, setSelectedModel] = useState<string>("gpt-4o-mini");
+export function SelectModel({ chatId }: { chatId?: string }) {
+  const defaultModel = useModel();
+  const [model, setModel] = useState<string>(defaultModel);
 
+  // Fetch the chat model when the component mounts or chatId changes
   useEffect(() => {
-    const stored = localStorage.getItem('selectedModel');
-    if (stored) setSelectedModel(stored);
-  }, []);
+    if (!chatId) return;
 
-  const handleModelChange = (value: string) => {
-    localStorage.setItem('selectedModel', value);
-    setSelectedModel(value);
-    window.dispatchEvent(new Event('storage')); // Trigger storage event
+    const fetchChatModel = async () => {
+      try {
+        const response = await fetch(`/api/chat/${chatId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.model) {
+            setModel(data.model);
+            console.log(`Using model from chat: ${data.model}`);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching chat model:", error);
+      }
+    };
+
+    fetchChatModel();
+  }, [chatId]);
+
+  const handleModelChange = async (value: string) => {
+    setModel(value);
+    
+    // If we have a chatId, update the model for this chat
+    if (chatId) {
+      try {
+        const response = await fetch(`/api/chat/${chatId}/model`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ model: value }),
+        });
+
+        if (response.ok) {
+          console.log(`Model updated to ${value} for chat ${chatId}`);
+          toast({
+            title: "Model changed",
+            description: `Chat is now using ${value}`,
+            duration: 3000,
+          });
+          
+          // Trigger a storage event to notify other components
+          // Use a custom event instead of localStorage to avoid page reload
+          const modelChangeEvent = new CustomEvent('modelChange', { 
+            detail: { model: value, chatId } 
+          });
+          window.dispatchEvent(modelChangeEvent);
+        } else {
+          console.error("Failed to update model");
+          toast({
+            title: "Error",
+            description: "Failed to update model",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error updating model:", error);
+        toast({
+          title: "Error",
+          description: "Error updating model",
+          variant: "destructive",
+        });
+      }
+    } else {
+      // If no chatId, just update the default model in localStorage
+      localStorage.setItem("model", value);
+      toast({
+        title: "Default model changed",
+        description: `Default model is now ${value}`,
+        duration: 3000,
+      });
+      
+      // Dispatch event for default model change
+      const modelChangeEvent = new CustomEvent('defaultModelChange', { 
+        detail: { model: value } 
+      });
+      window.dispatchEvent(modelChangeEvent);
+    }
   };
 
   return (
-    <div className="relative">
-      <Select onValueChange={handleModelChange} value={selectedModel}>
-        <SelectTrigger className={cn(
-          "w-full resize-none rounded-lg border bg-background text-base text-foreground",
-          "placeholder:text-muted-foreground/60"
-        )}>
-          <SelectValue />
+    <div className="flex items-center gap-2">
+      <Select value={model} onValueChange={handleModelChange}>
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Select model" />
         </SelectTrigger>
-        <SelectContent className="bg-background border-border">
-          {Object.keys(MODELS).map((model) => (
-            <SelectItem key={model} value={model}>
-              {model}
+        <SelectContent>
+          {Object.keys(MODELS).map((modelId) => (
+            <SelectItem key={modelId} value={modelId}>
+              {getModelDisplayName(modelId)}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
     </div>
   );
+}
+
+// Function to get a display name for the model
+function getModelDisplayName(modelId: string) {
+  switch (modelId) {
+    case "gpt-4o-mini":
+      return "GPT-4o Mini";
+    case "gpt-4o":
+      return "GPT-4o";
+    case "gpt-4":
+      return "GPT-4";
+    case "deepseek-chat":
+      return "DeepSeek Chat";
+    case "deepseek-reasoner":
+      return "DeepSeek Reasoner";
+    case "claude-3-opus-20240229":
+      return "Claude 3 Opus";
+    case "claude-3-5-sonnet-20241022":
+      return "Claude 3.5 Sonnet";
+    case "claude-3-7-sonnet-20250219":
+      return "Claude 3.7 Sonnet";
+    default:
+      return modelId;
+  }
 }
