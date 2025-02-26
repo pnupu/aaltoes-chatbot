@@ -27,7 +27,6 @@ export function SelectModel({ chatId }: { chatId?: string }) {
           const data = await response.json();
           if (data.model) {
             setModel(data.model);
-            console.log(`Using model from chat: ${data.model}`);
           }
         }
       } catch (error) {
@@ -53,7 +52,6 @@ export function SelectModel({ chatId }: { chatId?: string }) {
         });
 
         if (response.ok) {
-          console.log(`Model updated to ${value} for chat ${chatId}`);
           toast({
             title: "Model changed",
             description: `Chat is now using ${value}`,

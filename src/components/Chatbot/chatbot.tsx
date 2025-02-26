@@ -68,7 +68,6 @@ export function ScrollableChatMessages({
           const data = await response.json();
           if (data.model) {
             setChatModel(data.model);
-            console.log(`Using model from chat in ScrollableChatMessages: ${data.model}`);
           }
         }
       } catch (error) {
@@ -88,7 +87,6 @@ export function ScrollableChatMessages({
       
       // Only update if this event is for our chat
       if (eventChatId === chatId) {
-        console.log(`Model changed event received in ScrollableChatMessages: ${model} for chat ${chatId}`);
         setChatModel(model);
       }
     };
@@ -129,7 +127,6 @@ export function ScrollableChatMessages({
   };
 
   useEffect(() => {
-    console.log("isAtBottom", isAtBottom);
 
     if (isAtBottom) {
       scrollToBottom();
@@ -176,7 +173,6 @@ function ChatMessages({
           const data = await response.json();
           if (data.model) {
             setChatModel(data.model);
-            console.log(`Using model from chat in ChatMessages: ${data.model}`);
           }
         }
       } catch (error) {
@@ -196,7 +192,6 @@ function ChatMessages({
       
       // Only update if this event is for our chat
       if (eventChatId === chatId) {
-        console.log(`Model changed event received in ChatMessages: ${model} for chat ${chatId}`);
         setChatModel(model);
       }
     };
@@ -275,7 +270,6 @@ const ChatInput = ({
           const data = await response.json();
           if (data.model) {
             setChatModel(data.model);
-            console.log(`Using model from chat: ${data.model}`);
           }
         }
       } catch (error) {
@@ -295,7 +289,6 @@ const ChatInput = ({
       
       // Only update if this event is for our chat
       if (eventChatId === chatId) {
-        console.log(`Model changed event received: ${model} for chat ${chatId}`);
         setChatModel(model);
       }
     };
@@ -304,7 +297,6 @@ const ChatInput = ({
       // Only update if we don't have a specific chat model
       if (!chatId) {
         const { model } = event.detail;
-        console.log(`Default model changed to: ${model}`);
         setChatModel(model);
       }
     };

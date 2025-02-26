@@ -175,7 +175,6 @@ export async function POST(req: Request) {
           console.error("Error generating chat topic:", error);
         });
       }
-      console.log(model)
 
       const stream = await streamText({
         model: getModelClient(model),
